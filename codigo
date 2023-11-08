@@ -1,0 +1,247 @@
+#include <SimplyAtomic.h>
+#define ENCODER_A_M1 2   // amarillo
+#define ENCODER_B_M1 3   // verde MOTOR BASE
+#define ENCODER_A_M2 4   // amarillo
+#define ENCODER_B_M2 6   // verde MOTOR BRAZO
+#define ENCODER_A_M3 11  // amarillo
+#define ENCODER_B_M3 12  // verde MOTOR AEREOGRAFO
+#define PWM_M1 5         // MOTOR BASE
+#define PWM_M2 9         // MOTOR BRAZO
+#define PWM_M3 10        // MOTOR AEREOGRAFO
+#define Direccion_Motor_2_M1 8
+#define Direccion_Motor_1_M1 7  // MOTOR BASE
+#define Direccion_Motor_2_M2 13
+#define Direccion_Motor_1_M2 A0  // MOTOR BRAZO
+#define Direccion_Motor_2_M3 A1
+#define Direccion_Motor_1_M3 A2  // MOTOR AEREOGRAFO
+#define DEBUG(a) Serial.println(a);
+
+volatile int posi1 = 0, posi2 = 0, posi3 = 0;
+long prevT = 0;
+float eprev = 0;
+float eintegral = 0;
+
+long int resolucion1 = 0;   //
+long int resolucion2 = 0;  // 
+
+long int posicionDeseada = 0, angulotex = 0;
+long posiciong = 0;
+int sentidogiro = 1;
+String data = "", anguloT = "", Eslabon = "", sentido = "";
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(ENCODER_A_M1, INPUT);
+  pinMode(ENCODER_B_M1, INPUT);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A_M1), readEncoder1, RISING);
+  pinMode(PWM_M1, OUTPUT);
+  pinMode(Direccion_Motor_1_M1, OUTPUT);
+  pinMode(Direccion_Motor_2_M1, OUTPUT);
+
+  pinMode(ENCODER_A_M2, INPUT);
+  pinMode(ENCODER_B_M2, INPUT);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A_M2), readEncoder2, RISING);
+  pinMode(PWM_M2, OUTPUT);
+  pinMode(Direccion_Motor_1_M2, OUTPUT);
+  pinMode(Direccion_Motor_2_M2, OUTPUT);
+
+  pinMode(ENCODER_A_M3, INPUT);
+  pinMode(ENCODER_B_M3, INPUT);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A_M3), readEncoder3, RISING);
+  pinMode(PWM_M3, OUTPUT);
+  pinMode(Direccion_Motor_1_M3, OUTPUT);
+  pinMode(Direccion_Motor_2_M3, OUTPUT);
+}
+
+void loop() {
+  if (Serial.available()) {
+    data = Serial.readStringUntil('\n');
+    DEBUG(data);
+    Eslabon = data.substring(3, 4);  //extraer eslabon mover
+    sentido = data.substring(5);     //extraer sentido de giro
+    anguloT = data.substring(0, 3);  //extraer angulo para mover
+    //Serial.println(Eslabon);
+    //Serial.println(anguloT);
+    //Serial.println(sentido);
+    if (sentido == "+") {
+      sentidogiro = 1;
+    } else if (sentido == "-") {
+      sentidogiro = -1;
+    }
+    Serial.println(sentidogiro);
+  }
+
+
+
+  if (Eslabon == "b")  //b =base
+  {
+    angulotex = anguloT.toInt();
+    posicionDeseada = angulotex * sentidogiro;
+    long int target = (posicionDeseada * resolucion1) / 360;
+
+    // PID constants
+    float kp = 0;
+    float kd = 0;
+    float ki = 0;
+    // diferencia de tiempo
+    long currT = micros();
+    float deltaT = ((float)(currT - prevT)) / (1.0e6);
+    prevT = currT;
+    int pos = 0;
+    ATOMIC() {
+      pos = posi1;
+    }
+    // error
+    int e = pos - target;
+    // derivative
+    float dedt = (e - eprev) / (deltaT);
+
+    // integral
+    eintegral = eintegral + e * deltaT;
+
+    // control signal
+    float u = kp * e + kd * dedt + ki * eintegral;
+
+    // velocidad/torque del motor
+    float pwr = fabs(u);
+    if (pwr > 255) {
+      pwr = 255;
+    }
+    // motor direccion
+    int dir = 1;
+    if (u < 0) {
+      dir = -1;
+    }
+    // señal del motor
+    setMotor(dir, pwr, PWM_M1, Direccion_Motor_1_M1, Direccion_Motor_2_M1);
+    // Error previo
+    eprev = e;
+    readEncoder1();
+  } else if (Eslabon == "c")  //c = cuerpo eslabon BRAZO
+  {
+
+    angulotex = anguloT.toInt();
+    posicionDeseada = angulotex * sentidogiro;
+    long int target = (posicionDeseada * resolucion2) / 360;
+    // PID constants
+    float kp = 0;
+    float kd = 0;
+    float ki = 0:
+    // diferencia de tiempo
+    long currT = micros();
+    float deltaT = ((float)(currT - prevT)) / (1.0e6);
+    prevT = currT;
+    int pos = 0;
+    ATOMIC() {
+      pos = posi2;
+    }
+    // error
+    int e = pos - target;
+    // derivative
+    float dedt = (e - eprev) / (deltaT);
+
+    // integral
+    eintegral = eintegral + e * deltaT;
+
+    // control signal
+    float u = kp * e + kd * dedt + ki * eintegral;
+
+    // velocidad/torque del motor
+    float pwr = fabs(u);
+    if (pwr > 255) {
+      pwr = 255;
+    }
+    // motor direccion
+    int dir = 1;
+    if (u < 0) {
+      dir = -1;
+    }
+    // señal del motor
+    setMotor(dir, pwr, PWM_M2, Direccion_Motor_1_M2, Direccion_Motor_2_M2);
+    // Error previo
+    eprev = e;
+    readEncoder2();
+  } else if (Eslabon == "a")  //b =base, c = cuerpo eslabon 2 , a = aereografo
+  {
+    angulotex = anguloT.toInt();
+    posicionDeseada = angulotex * sentidogiro;
+    long int target = (posicionDeseada * resolucion2) / 360;
+    // PID constants
+    float kp = 0;
+    float kd = 0;
+    float ki = 0;
+    // diferencia de tiempo
+    long currT = micros();
+    float deltaT = ((float)(currT - prevT)) / (1.0e6);
+    prevT = currT;
+    int pos = 0;
+    ATOMIC() {
+      pos = posi3;
+    }
+    // error
+    int e = pos - target;
+    // derivative
+    float dedt = (e - eprev) / (deltaT);
+
+    // integral
+    eintegral = eintegral + e * deltaT;
+
+    // control signal
+    float u = kp * e + kd * dedt + ki * eintegral;
+
+    // velocidad/torque del motor
+    float pwr = fabs(u);
+    if (pwr > 255) {
+      pwr = 255;
+    }
+    // motor direccion
+    int dir = 1;
+    if (u < 0) {
+      dir = -1;
+    }
+    // señal del motor
+    setMotor(dir, pwr, PWM_M3, Direccion_Motor_1_M3, Direccion_Motor_2_M3);
+    // Error previo
+    eprev = e;
+    readEncoder3();
+  }
+}
+
+void setMotor(int dir, int voltaje_pwm, int pwm, int direccion_Motor_1, int direccion_Motor_2) {
+  analogWrite(pwm, voltaje_pwm);
+  if (dir == 1) {
+    digitalWrite(direccion_Motor_1, HIGH);
+    digitalWrite(direccion_Motor_2, LOW);
+  } else if (dir == -1) {
+    digitalWrite(direccion_Motor_1, LOW);
+    digitalWrite(direccion_Motor_2, HIGH);
+  } else {
+    digitalWrite(direccion_Motor_1, LOW);
+    digitalWrite(direccion_Motor_2, LOW);
+  }
+}
+
+void readEncoder1() {
+  int b = digitalRead(ENCODER_B_M1);
+  if (b > 0) {
+    posi1++;
+  } else {
+    posi1--;
+  }
+}
+void readEncoder2() {
+  int b = digitalRead(ENCODER_B_M2);
+  if (b > 0) {
+    posi2++;
+  } else {
+    posi2--;
+  }
+}
+void readEncoder3() {
+  int b = digitalRead(ENCODER_B_M3);
+  if (b > 0) {
+    posi3++;
+  } else {
+    posi3--;
+  }
+}
