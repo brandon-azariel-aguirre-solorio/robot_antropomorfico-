@@ -21,8 +21,8 @@ long prevT = 0;
 float eprev = 0;
 float eintegral = 0;
 
-long int resolucion1 = 0;   //
-long int resolucion2 = 0;  // 
+long int resolucion1 = 6000;   // 12 vueltas X 2 X 250 de reduccion
+long int resolucion2 = 14400;  // 12 vueltas X 2 X 600 de reduccion
 
 long int posicionDeseada = 0, angulotex = 0;
 long posiciong = 0;
@@ -78,11 +78,11 @@ void loop() {
     angulotex = anguloT.toInt();
     posicionDeseada = angulotex * sentidogiro;
     long int target = (posicionDeseada * resolucion1) / 360;
-
+    //int target = 90;  // Angulo al deseado
     // PID constants
-    float kp = 0;
-    float kd = 0;
-    float ki = 0;
+    float kp = 1.25;
+    float kd = 0.025;
+    float ki = 0.01125;
     // diferencia de tiempo
     long currT = micros();
     float deltaT = ((float)(currT - prevT)) / (1.0e6);
@@ -116,6 +116,10 @@ void loop() {
     setMotor(dir, pwr, PWM_M1, Direccion_Motor_1_M1, Direccion_Motor_2_M1);
     // Error previo
     eprev = e;
+    Serial.print(target);
+    Serial.print(" ");
+    Serial.print(posi1);
+    Serial.println();
     readEncoder1();
   } else if (Eslabon == "c")  //c = cuerpo eslabon BRAZO
   {
@@ -124,9 +128,9 @@ void loop() {
     posicionDeseada = angulotex * sentidogiro;
     long int target = (posicionDeseada * resolucion2) / 360;
     // PID constants
-    float kp = 0;
-    float kd = 0;
-    float ki = 0:
+    float kp = 0.9;
+    float kd = 0.055;
+    float ki = 0.0005:
     // diferencia de tiempo
     long currT = micros();
     float deltaT = ((float)(currT - prevT)) / (1.0e6);
@@ -160,16 +164,21 @@ void loop() {
     setMotor(dir, pwr, PWM_M2, Direccion_Motor_1_M2, Direccion_Motor_2_M2);
     // Error previo
     eprev = e;
+    Serial.print(target);
+    Serial.print(" ");
+    Serial.print(posi2);
+    Serial.println();
     readEncoder2();
   } else if (Eslabon == "a")  //b =base, c = cuerpo eslabon 2 , a = aereografo
   {
     angulotex = anguloT.toInt();
     posicionDeseada = angulotex * sentidogiro;
     long int target = (posicionDeseada * resolucion2) / 360;
+    //int target = 90;  // Angulo al deseado
     // PID constants
-    float kp = 0;
-    float kd = 0;
-    float ki = 0;
+    float kp = 0.9;
+    float kd = 0.055;
+    float ki = 0.0005;
     // diferencia de tiempo
     long currT = micros();
     float deltaT = ((float)(currT - prevT)) / (1.0e6);
@@ -203,6 +212,10 @@ void loop() {
     setMotor(dir, pwr, PWM_M3, Direccion_Motor_1_M3, Direccion_Motor_2_M3);
     // Error previo
     eprev = e;
+    Serial.print(target);
+    Serial.print(" ");
+    Serial.print(posi3);
+    Serial.println();
     readEncoder3();
   }
 }
