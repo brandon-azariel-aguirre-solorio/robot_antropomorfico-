@@ -6,3 +6,5 @@ Desing
 Interface
 <img width="1378" height="647" alt="image" src="https://github.com/user-attachments/assets/fe2a0f43-8b30-4ef6-8047-5668111cddc5" />
 <img width="1486" height="589" alt="image" src="https://github.com/user-attachments/assets/be516353-82be-43f7-9c80-64e4ce798d1b" />
+<img width="1639" height="694" alt="image" src="https://github.com/user-attachments/assets/a5837cc3-db35-4790-aff8-9955bde7df66" />
+<img width="1626" height="679" alt="image" src="https://github.com/user-attachments/assets/6107b959-c1ed-4ce3-acd7-1c4482fe6f48" />
